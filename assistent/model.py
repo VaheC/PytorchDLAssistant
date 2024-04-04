@@ -235,3 +235,23 @@ class DLAssistant(object):
             results = results.mean(axis=0)
 
         return results
+
+    @staticmethod
+    def get_stats_per_channel(images, labels):
+        n_samples, n_channels, height, width = images.size()
+        flattened_images = images.reshape(n_samples, n_channels, -1)
+        means = flattened_images.mean(axis=2)
+        stds = flattened_images.std(axis=2)
+        sum_means = means.sum(axis=0)
+        sum_stds = stds.sum(axis=0)
+        n_samples = torch.tensor([n_samples]*n_channels).float()
+        return torch.stack([n_samples, sum_means, sum_stds], axis=0)
+
+    @staticmethod
+    def create_normalizer(loader):
+        total_samples, total_means, total_stds = DLAssistant.apply_fn_over_loader(
+            loader, DLAssistant.get_stats_per_channel
+        )
+        norm_mean = total_means / total_samples
+        norm_stds = total_stds / total_samples
+        return Normalize(norm_mean, norm_stds)
