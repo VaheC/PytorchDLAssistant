@@ -202,3 +202,24 @@ class DLAssistant(object):
         for handle in self.hook_handlers_dict.values():
             handle.remove()
         self.hook_handlers_dict = {}
+
+    def show_metric(self, X, y, metric, is_classification=False, threshold=0.5):
+
+        self.model.eval()
+        X = torch.as_tensor(X).float()
+        y_hat = self.model(X.to(self.device))
+        self.model.train()
+
+        if is_classification:
+            
+            if y_hat.size()[1] > 1:
+                _, predicted_class = torch.max(y_hat, 1).cpu().numpy()
+            else:
+                predicted_class = (torch.sigmoid(y_hat) > threshold).long().cpu().numpy()
+
+            return metric(y, predicted_class)
+
+        else:
+
+            return metric(y, y_hat.detach().cpu().numpy())
+                
