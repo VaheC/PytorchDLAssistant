@@ -318,4 +318,4 @@ class DLAssistant(object):
         plt.xlabel('learning rate')
         plt.ylabel('loss')
 
-        return fig
+        return tracking_dict, fig
