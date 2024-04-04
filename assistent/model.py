@@ -20,6 +20,9 @@ class DLAssistant(object):
         self.train_step_fn = self._create_train_step_fn()
         self.valid_step_fn = self._create_valid_step_fn()
 
+        self.layer_output_dict = {}
+        self.hook_handlers_dict = {}
+
     def to(self, device):
 
         try:
@@ -170,3 +173,32 @@ class DLAssistant(object):
     def count_parameters(self):
         parameter_number_list = [p.numel() for p in self.model.parameters() if p.requires_grad]
         return sum(parameter_number_list)
+
+    def attach_hook(self, layers_to_hook_list, hook_fn=None):
+
+        modules_list = list(self.model.named_modules())[1:]
+        layer_names_dict = {elem[1]: elem[0] for elem in modules_list}
+
+        self.layer_output_dict = {}
+
+        if hook_fn is None:
+
+            def hook_fn(layer, inputs, outputs):
+                layer_name = layer_names_dict[layer]
+                output_values = outputs.detach().cpu().numpy()
+                if self.layer_output_dict[layer_name] is None:
+                    self.layer_output_dict[layer_name] = output_values
+                else:
+                    self.layer_output_dict[layer_name] = np.concatenate(
+                        [self.layer_output_dict[layer_name], output_values]
+                    )
+
+        for layer_name, layer in modules_list:
+            if layer_name in layers_to_hook_list:
+                self.layer_output_dict[layer_name] = None
+                self.hook_handlers_dict[layer_name] = layer.register_forward_hook(hook_fn)
+
+    def remove_hook(self):
+        for handle in self.hook_handlers_dict.values():
+            handle.remove()
+        self.hook_handlers_dict = {}
