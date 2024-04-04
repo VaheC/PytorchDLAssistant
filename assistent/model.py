@@ -319,3 +319,6 @@ class DLAssistant(object):
         plt.ylabel('loss')
 
         return tracking_dict, fig
+
+    def set_optimizer(self, optimizer):
+        self.optimizer = optimizer
