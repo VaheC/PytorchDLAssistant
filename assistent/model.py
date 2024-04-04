@@ -333,7 +333,7 @@ class DLAssistant(object):
         self.optimizer = optimizer
 
     def set_lr_scheduler(self, scheduler):
-        if scheduler.optimizer = self.optimizer:
+        if scheduler.optimizer == self.optimizer:
             self.scheduler = scheduler
             if (isinstance(scheduler, optim.lr_scheduler.CyclicLR) or\
                 isinstance(scheduler, optim.lr_scheduler.OneCycleLR) or\
