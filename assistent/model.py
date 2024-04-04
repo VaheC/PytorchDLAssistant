@@ -225,9 +225,10 @@ class DLAssistant(object):
             
             if y_hat.size()[1] > 1:
                 _, predicted_class = torch.max(y_hat, 1)
-                predicted_class = predicted_class.cpu().numpy()
+                predicted_class = predicted_class.detach().cpu().numpy()
             else:
-                predicted_class = (torch.sigmoid(y_hat) > threshold).long().cpu().numpy()
+                predicted_class = (torch.sigmoid(y_hat) > threshold).long()
+                predicted_class = predicted_class.detach().cpu().numpy()
 
             return metric(y, predicted_class)
 
