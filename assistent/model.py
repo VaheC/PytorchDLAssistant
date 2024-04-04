@@ -23,6 +23,9 @@ class DLAssistant(object):
         self.layer_output_dict = {}
         self.hook_handlers_dict = {}
 
+        self.scheduler = None
+        self.is_batch_lr_scheduler = False
+
     def to(self, device):
 
         try:
@@ -322,3 +325,13 @@ class DLAssistant(object):
 
     def set_optimizer(self, optimizer):
         self.optimizer = optimizer
+
+    def set_lr_scheduler(self, scheduler):
+        if scheduler.optimizer = self.optimizer:
+            self.scheduler = scheduler
+            if (isinstance(scheduler, optim.lr_scheduler.CyclicLR) or\
+                isinstance(scheduler, optim.lr_scheduler.OneCycleLR) or\
+                isinstance(scheduler, optim.lr_scheduler.Cosine)):
+                self.is_batch_lr_scheduler = True
+            else:
+                self.is_batch_lr_scheduler = False
