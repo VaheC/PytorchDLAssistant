@@ -213,7 +213,7 @@ class DLAssistant(object):
         if is_classification:
             
             if y_hat.size()[1] > 1:
-                _, predicted_class = torch.max(y_hat, 1).cpu().numpy()
+                _, predicted_class = torch.max(y_hat, 1).detach().cpu().numpy()
             else:
                 predicted_class = (torch.sigmoid(y_hat) > threshold).long().cpu().numpy()
 
@@ -255,3 +255,67 @@ class DLAssistant(object):
         norm_mean = total_means / total_samples
         norm_stds = total_stds / total_samples
         return Normalize(norm_mean, norm_stds)
+
+    @staticmethod
+    def create_lr_fn(start_lr, end_lr, n_iter, lr_mode='exp'):
+        if lr_mode == 'linear':
+            lr_factor = (end_lr/start_lr - 1) / n_iter
+            def lr_fn(iteration):
+                return 1 + lr_factor * iteration
+        if lr_mode == 'exp':
+            lr_factor = np.log(end_lr/start_lr) / n_iter
+            def lr_fn(iteration):
+                return np.exp(lr_factor) ** iteration
+        return lr_fn
+
+    def lr_range_test(self, data_loader, end_lr, n_iter=100, lr_mode='exp', ewma_param=0.5):
+
+        initial_state_dict = {
+            'model': deepcopy(self.model.state_dict()),
+            'optimizer': deepcopy(self.optimizer.state_dict())
+        }
+
+        start_lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+        lr_fn = DLAssistant.create_lr_fn(start_lr, end_lr, n_iter, lr_mode)
+        scheduler = LambdaLR(self.optimizer, lr_lambda=lr_fn)
+
+        tracking_dict = {'loss': [], 'lr': []}
+
+        current_iteration = 0
+
+        for X_batch, y_batch in data_loader:
+
+            X_batch = X_batch.to(self.device)
+            y_batch = y_batch.to(self.device)
+
+            y_hat = self.model(X_batch)
+            loss = self.loss_fn(y_hat, y_batch)
+
+            tracking_dict['lr'].append(scheduler.get_last_lr()[0])
+
+            if len(tracking_dict['loss']) == 0:
+                tracking_dict['loss'].append(loss.item())
+            else:
+                tracking_dict['loss'].append((1-ewma_param)*tracking_dict['loss'][-1] + ewma_param*loss.item())
+
+            loss.backward()
+            self.optimizer.step()
+            scheduler.step()
+            self.optimizer.zero_grad()
+
+            current_iteration += 1
+
+            if current_iteration == n_iter:
+                break
+
+        self.model.load_state_dict(initial_state_dict['model'])
+        self.optimizer.load_state_dict(initial_state_dict['optimizer'])
+            
+        fig = plt.figure(figsize=(10, 6))
+        plt.plot(tracking_dict['lr'], tracking_dict['loss'])
+        if lr_mode == 'exp':
+            plt.xscale('log')
+        plt.xlabel('learning rate')
+        plt.ylabel('loss')
+
+        return fig
