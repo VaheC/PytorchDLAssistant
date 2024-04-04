@@ -14,6 +14,8 @@ resnet18_model.fc = nn.Identity()
 
 def extract_model_features(model, data_loader):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model.to(device)
+    
     labels = None
     features = None
 
@@ -25,7 +27,7 @@ def extract_model_features(model, data_loader):
             features = output.detach().cpu()
         else:
             labels = torch.cat([labels, y.cpu()])
-            features = torch.cat([features, output.detach.cpu()])
+            features = torch.cat([features, output.detach().cpu()])
 
     dataset = TensorDataset(features, labels)
 
