@@ -166,3 +166,7 @@ class DLAssistant(object):
         pred_y = self.model(X_tensor).detach().cpu().numpy()
         self.model.train()
         return pred_y
+
+    def count_parameters(self):
+        parameter_number_list = [p.numel() for p in self.model.parameters() if p.requires_grad]
+        return sum(parameter_number_list)
