@@ -224,7 +224,8 @@ class DLAssistant(object):
         if is_classification:
             
             if y_hat.size()[1] > 1:
-                _, predicted_class = torch.max(y_hat, 1).detach().cpu().numpy()
+                _, predicted_class = torch.max(y_hat, 1)
+                predicted_class = predicted_class.cpu().numpy()
             else:
                 predicted_class = (torch.sigmoid(y_hat) > threshold).long().cpu().numpy()
 
