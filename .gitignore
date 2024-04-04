@@ -152,12 +152,13 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# ignore jupyter notebooks
-.ipynb
-.jpg
-.jpeg
-.csv
-.png
+# ignore custom files
+*.ipynb
+*.jpg
+*.jpeg
+*.csv
+*.png
+summary/**
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
