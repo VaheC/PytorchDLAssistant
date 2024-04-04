@@ -347,5 +347,5 @@ class DLAssistant(object):
                 else:
                     self.scheduler.step()
 
-                current_lr = map(lambda x: x['lr'], self.scheduler.optimizer.state_dict()['param_groups'])
+                current_lr = list(map(lambda x: x['lr'], self.scheduler.optimizer.state_dict()['param_groups']))
                 self.learning_rates.append(current_lr)
