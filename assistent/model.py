@@ -87,11 +87,14 @@ class DLAssistant(object):
 
         mini_batch_losses = []
 
-        for X_batch, y_batch in data_loader:
+        for i, (X_batch, y_batch) in enumerate(data_loader):
             X_batch = X_batch.to(self.device)
             y_batch = y_batch.to(self.device)
             mini_batch_loss = step_fn(X_batch, y_batch)
             mini_batch_losses.append(mini_batch_loss)
+
+            if not validation:
+                self._step_mini_batch_schedulers(i / n_batches)
 
         return np.mean(mini_batch_losses)
     
@@ -342,8 +345,19 @@ class DLAssistant(object):
     def _step_epoch_schedulers(self, valid_loss):
         if self.scheduler is not None:
             if not self.is_batch_lr_sheduler:
-                if isintance(self.scheduler, optim.lr_scheduler.ReduceLROnPlateau):
+                if isinstance(self.scheduler, optim.lr_scheduler.ReduceLROnPlateau):
                     self.scheduler.step(val_loss)
+                else:
+                    self.scheduler.step()
+
+                current_lr = list(map(lambda x: x['lr'], self.scheduler.optimizer.state_dict()['param_groups']))
+                self.learning_rates.append(current_lr)
+
+    def _step_mini_batch_schedulers(self, frac_epoch):
+        if self.scheduler is not None:
+            if self.is_batch_lr_sheduler:
+                if isinstance(self.scheduler, optim.lr_scheduler.CosineAnnealingWarmRestarts):
+                    self.scheduler.step(self.total_epochs + frac_epoch)
                 else:
                     self.scheduler.step()
 
