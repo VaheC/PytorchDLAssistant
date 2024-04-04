@@ -25,6 +25,7 @@ class DLAssistant(object):
 
         self.scheduler = None
         self.is_batch_lr_scheduler = False
+        self.learning_rates = []
 
     def to(self, device):
 
@@ -119,6 +120,8 @@ class DLAssistant(object):
             with torch.no_grad():
                 valid_loss = self._get_mini_batch_loss(validation=True)
                 self.valid_losses.append(valid_loss)
+
+            self._step_epoch_schedulers(valid_loss)
 
             if self.tensorboard_writer is not None:
                 scalar_dict = {'train': train_loss}
@@ -335,3 +338,14 @@ class DLAssistant(object):
                 self.is_batch_lr_scheduler = True
             else:
                 self.is_batch_lr_scheduler = False
+
+    def _step_epoch_schedulers(self, valid_loss):
+        if self.scheduler is not None:
+            if not self.is_batch_lr_sheduler:
+                if isintance(self.scheduler, optim.lr_scheduler.ReduceLROnPlateau):
+                    self.scheduler.step(val_loss)
+                else:
+                    self.scheduler.step()
+
+                current_lr = map(lambda x: x['lr'], self.scheduler.optimizer.state_dict()['param_groups'])
+                self.learning_rates.append(current_lr)
