@@ -85,6 +85,8 @@ class DLAssistant(object):
         if data_loader is None:
             return None
 
+        n_batches = len(data_loader)
+
         mini_batch_losses = []
 
         for i, (X_batch, y_batch) in enumerate(data_loader):
