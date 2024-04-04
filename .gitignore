@@ -154,10 +154,10 @@ cython_debug/
 
 # ignore jupyter notebooks
 .ipynb
-summary/
 .jpg
 .jpeg
 .csv
+.png
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
