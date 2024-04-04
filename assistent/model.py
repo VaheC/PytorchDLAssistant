@@ -222,4 +222,16 @@ class DLAssistant(object):
         else:
 
             return metric(y, y_hat.detach().cpu().numpy())
-                
+    
+    @staticmethod
+    def apply_fn_over_loader(loader, func, reduce='sum'):
+
+        results = [func(X, y) for X, y in loader]
+        results = torch.stack(results, axis=0)
+
+        if reduce == 'sum':
+            results = results.sum(axis=0)
+        elif reduce == 'mean':
+            results = results.mean(axis=0)
+
+        return results
