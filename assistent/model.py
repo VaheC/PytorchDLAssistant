@@ -62,7 +62,7 @@ class DLAssistant(object):
 
             if callable(self.clipping):
                 self.clipping()
-                
+
             self.optimizer.step()
             self.optimizer.zero_grad()
             return loss.item()
@@ -387,4 +387,18 @@ class DLAssistant(object):
         )
 
     def remove_clip(self):
+        if isinstance(self.clipping, list):
+            for handle in self.clipping:
+                handle.remove()
         self.clipping = None
+
+    def set_clip_grad_backprop(self, clip_value):
+
+        if self.clipping is None:
+            self.clipping = []
+        
+        for p in model.parameters():
+            if p.requires_grad:
+                func = lambda grad: torch.clamp(grad, -clip_value, clip_value)
+                handle = p.register_hook(func)
+                self.clipping.append(handle)
