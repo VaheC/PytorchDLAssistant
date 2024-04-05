@@ -27,6 +27,8 @@ class DLAssistant(object):
         self.is_batch_lr_scheduler = False
         self.learning_rates = []
 
+        self.clipping = None
+
     def to(self, device):
 
         try:
@@ -57,6 +59,10 @@ class DLAssistant(object):
             y_hat = self.model(X)
             loss = self.loss_fn(y_hat, y)
             loss.backward()
+
+            if callable(self.clipping):
+                self.clipping()
+                
             self.optimizer.step()
             self.optimizer.zero_grad()
             return loss.item()
@@ -367,3 +373,18 @@ class DLAssistant(object):
 
                 current_lr = list(map(lambda x: x['lr'], self.scheduler.optimizer.state_dict()['param_groups']))
                 self.learning_rates.append(current_lr)
+
+    def set_clip_grad_value(self, clip_value):
+        self.clipping = lambda: nn.utils.clip_grad_value_(
+            self.model.parameters(),
+            clip_value=clip_value
+        )
+
+    def set_clip_grad_norm(self, max_norm, norm_type=2):
+        self.clipping = lambda: nn.utils.clip_grad_norm_(
+            self.model.parameters(),
+            max_norm, norm_type
+        )
+
+    def remove_clip(self):
+        self.clipping = None
